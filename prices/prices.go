@@ -1,53 +1,44 @@
 package prices
 
 import (
-	"bufio"
+	"example.com/practice_app/file_handling"
 	"fmt"
-	"os"
-	"example.com/practice_app/conversion"
 )
 
 type TaxIncludedPriceJob struct {
-	TaxRate           float64
-	InputPrices       []float64
-	TaxIncludedPrices map[string]float64
+	TaxRate           float64						`json:"tax_rate"`
+	InputPrices       []float64						`json:"input_prices"`
+	TaxIncludedPrices map[string]string				`json:"tax_included_prices"`
+	FileHandler		  file_handling.FileHandler		`json:"-"`
 }
 
-func NewJob(taxRate float64) *TaxIncludedPriceJob {
+func NewJob(taxRate float64, fileHandler file_handling.FileHandler) *TaxIncludedPriceJob {
 	return &TaxIncludedPriceJob{
 		TaxRate: taxRate,
+		FileHandler: fileHandler,
 	}
 }
 
-func (job TaxIncludedPriceJob) Process() {
-	job.LoadData("price_data.txt")
-	result := make(map[string]float64)
+func (job *TaxIncludedPriceJob) Process() {
+	job.InputPrices = job.FileHandler.LoadData()
+	result := make(map[string]string)
 
-	for priceIndex, price := range job.InputPrices {
-		TaxedPrice := price * (1 + job.TaxRate)
-		result[fmt.Sprintf("%v", priceIndex+1)] = TaxedPrice
+	for _, price := range job.InputPrices {
+		calculation := price * (1 + job.TaxRate) 
+		TaxedPrice := fmt.Sprintf("%.2f", calculation)
+		result[fmt.Sprintf("%v", price)] = TaxedPrice
 	}
 
-	fmt.Println(result)
-}
+	job.TaxIncludedPrices = result
 
-func (job *TaxIncludedPriceJob) LoadData(fileName string) {
-	file, err := os.Open(fileName)
+	fileName := fmt.Sprintf("result_%v.json", job.TaxRate * 100)
 
+	err := job.FileHandler.WriteJson(job, fileName)
 	if err != nil {
-		fmt.Println("Cannot open the file")
-		fmt.Println(err)
-		return
+		fmt.Printf("the JSON thingy failed: %v\n", err)
 	}
-	scanner := bufio.NewScanner(file)
-	scanner.Split(bufio.ScanLines)
 
-	price_data_str := []string{}
 
-	for scanner.Scan() {
-		price_data_str = append(price_data_str, scanner.Text())
-	}
-	file.Close()
-	
-	job.InputPrices = conversion.ConvertStrToFloatMap(price_data_str)
+
 }
+
