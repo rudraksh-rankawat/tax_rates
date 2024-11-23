@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
+	"example.com/practice_app/conversion"
 )
 
 type TaxIncludedPriceJob struct {
@@ -49,13 +49,5 @@ func (job *TaxIncludedPriceJob) LoadData(fileName string) {
 	}
 	file.Close()
 	
-	price_data_float := make([]float64, len(price_data_str))
-
-
-	for priceIndex, price := range price_data_str {
-		// price_data_float = append(price_data_float, strconv.ParseFloat(price, 64))
-		price_data_float[priceIndex], _ = strconv.ParseFloat(price, 64)
-	}
-
-	job.InputPrices = price_data_float
+	job.InputPrices = conversion.ConvertStrToFloatMap(price_data_str)
 }
